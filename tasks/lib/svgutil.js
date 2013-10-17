@@ -4,11 +4,19 @@ var fs = require("fs"),
 
 var svgo = new SVGO();
 
+function unwrap (svg) {
+	return svg
+		.replace(/(<svg[^>]+>|<\/svg>)/g, '')
+		.replace(/<!--[^>]+-->/g, '')
+		.replace(/<\?xml[^>]+>/g, '')
+		.replace(/<!doctype[^>]+>/gi, '');
+}
+
 function loadShape (file, callback) {
 	var _file = path.relative(process.cwd(), file);
 	fs.readFile(_file, "utf8", function (err, data) {
 		svgo.optimize(data, function (result) {
-			result.data = result.data.replace(/^<svg[^>]+>|<\/svg>$/g, "");
+			result.data = unwrap(result.data);
 			result.info.width = parseFloat(result.info.width);
 			result.info.height = parseFloat(result.info.height);
 			callback(null, result);
@@ -21,7 +29,7 @@ function loadShapeRaw (file, callback) {
 		var widthMatch = data.match(/ width="(\d+)/),
 			heightMatch = data.match(/ height="(\d+)/),
 			result = {
-				data: data.replace(/^<svg[^>]+>|<\/svg>$/g, ""),
+				data: unwrap(data),
 				info: {
 					width: parseFloat(widthMatch[1]),
 					height: parseFloat(heightMatch[1])
